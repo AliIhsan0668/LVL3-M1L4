@@ -10,7 +10,7 @@ intents.message_content = True       # Botun mesaj içeriğini okumasına izin v
 intents.guilds = True                # Botun sunucularla çalışmasına izin verme
 
 # Tanımlanmış bir komut önekine ve etkinleştirilmiş amaçlara sahip bir bot oluşturma
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='*', intents=intents)
 
 # Bot çalışmaya hazır olduğunda tetiklenen bir olay
 @bot.event
@@ -20,19 +20,25 @@ async def on_ready():
 # '!go' komutu
 @bot.command()
 async def go(ctx):
-    author = ctx.author.name  # Mesaj yazarının adını alma
-    # Kullanıcının zaten bir Pokémon'u olup olmadığını kontrol edin. Eğer yoksa, o zaman...
-    if author not in Pokemon.pokemons.keys():
-        pokemon = Pokemon(author)  # Yeni bir Pokémon oluşturma
-        await ctx.send(await pokemon.info())  # Pokémon hakkında bilgi gönderilmesi
-        image_url = await pokemon.show_img()  # Pokémon resminin URL'sini alma
+    author = ctx.author.name
+    if author not in Pokemon.pokemons:
+        pokemon = Pokemon(author)
+        await pokemon.load_data()  # <-- Verileri yükle
+        await ctx.send(await pokemon.info())
+        
+        image_url = await pokemon.show_img()
         if image_url:
-            embed = discord.Embed()  # Gömülü mesajı oluşturma
-            embed.set_image(url=image_url)  # Pokémon'un görüntüsünün ayarlanması
-            await ctx.send(embed=embed)  # Görüntü içeren gömülü bir mesaj gönderme
+            embed = discord.Embed()
+            embed.set_image(url=image_url)
+
+            embed.add_field(name="İsim", value=pokemon.name.upper(), inline=False)
+            embed.add_field(name="Boy", value=f"{pokemon.height / 10:.1f} m", inline=True)
+            embed.add_field(name="Kilo", value=f"{pokemon.weight / 10:.1f} kg", inline=True)
+            await ctx.send(embed=embed)
         else:
             await ctx.send("Pokémonun görüntüsü yüklenemedi!")
     else:
-        await ctx.send("Zaten kendi Pokémonunuzu oluşturdunuz!")  # Bir Pokémon'un daha önce oluşturulup oluşturulmadığını gösteren bir mesaj
+        await ctx.send("Zaten kendi Pokémonunuzu oluşturdunuz!")
+
 # Botun çalıştırılması
 bot.run(token)
