@@ -10,7 +10,7 @@ intents.message_content = True       # Botun mesaj içeriğini okumasına izin v
 intents.guilds = True                # Botun sunucularla çalışmasına izin verme
 
 # Tanımlanmış bir komut önekine ve etkinleştirilmiş amaçlara sahip bir bot oluşturma
-bot = commands.Bot(command_prefix='*', intents=intents)
+bot = commands.Bot(command_prefix='-', intents=intents)
 
 # Bot çalışmaya hazır olduğunda tetiklenen bir olay
 @bot.event
@@ -40,5 +40,49 @@ async def go(ctx):
     else:
         await ctx.send("Zaten kendi Pokémonunuzu oluşturdunuz!")
 
+@bot.command()
+async def feed(ctx):
+    author = ctx.author.name
+    if author in Pokemon.pokemons:
+        pokemon = Pokemon.pokemons[author]
+        msg = pokemon.feed()
+        await ctx.send(msg)
+    else:
+        await ctx.send("Önce bir Pokémon yakalamalısınız! Komut: `*go`")
+
+@bot.command()
+async def pokeinfo(ctx):
+    author = ctx.author.name
+    if author in Pokemon.pokemons:
+        pokemon = Pokemon.pokemons[author]
+        await pokemon.load_data()  # Güncel verileri yükle
+        info_text = await pokemon.info()
+
+        image_url = await pokemon.show_img()
+        if image_url:
+            embed = discord.Embed(title=f"{pokemon.name.upper()} - SEVİYE {pokemon.level}")
+            embed.set_image(url=image_url)
+            embed.add_field(name="Boy", value=f"{pokemon.height / 10:.1f} m", inline=True)
+            embed.add_field(name="Kilo", value=f"{pokemon.weight / 10:.1f} kg", inline=True)
+            embed.add_field(name="Besleme", value=str(pokemon.feeds), inline=True)
+            embed.add_field(name="XP", value=f"{pokemon.experience}/{pokemon.level * 20}", inline=True)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(info_text)
+    else:
+        await ctx.send("Henüz bir Pokémon'unuz yok. `*go` yazarak bir Pokémon yakalayın!")
+
+@bot.command()
+async def gameinfo(ctx):
+    await ctx.send("İyi oyunlar dilerim") 
+    await ctx.send("Oyun komutları ;")
+    await ctx.send("-go pokemonunuzu oluşturur")
+    await ctx.send("-feed pokemonunuzu besler.Böylece seviyesi ve XP artar")
+    await ctx.send("-pokeinfo pokemonunuz hakkında güncel bilgiler verir")
+
+@bot.command()
+async def repeat(ctx, times: int, content='repeating...'):
+    for i in range(times):
+        await ctx.send(content)
 # Botun çalıştırılması
 bot.run(token)
