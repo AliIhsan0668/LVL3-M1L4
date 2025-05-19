@@ -10,6 +10,9 @@ class Pokemon:
         self.name = None
         self.height = None
         self.weight = None
+        self.level = 1              # Yeni: Seviye sistemi
+        self.experience = 0        # Yeni: XP puanı
+        self.feeds = 0             # Yeni: Beslenme sayısı
         if pokemon_trainer not in Pokemon.pokemons:
             Pokemon.pokemons[pokemon_trainer] = self
         else:
@@ -34,8 +37,10 @@ class Pokemon:
 
         return (
             f"Pokémonunuzun ismi: {self.name}\n"
+            f"Seviye: {self.level}\n"
             f"Pokemonun boyu : {self.height} metre\n"
-            f"Pokemonun kilosu : {self.weight} kilogram"
+            f"Pokemonun kilosu : {self.weight} kilogram\n"
+            f"Toplam Besleme: {self.feeds}"
         )
 
     async def show_img(self):
@@ -46,3 +51,12 @@ class Pokemon:
                     data = await response.json()
                     img_url = data['sprites']['front_default']
                     return img_url
+                
+    def feed(self):
+        self.feeds += 1
+        self.experience += 10
+        if self.experience >= self.level * 20:
+            self.level += 1
+            self.experience = 0
+            return f"{self.name.upper()} seviye atladı! Şimdi {self.level}. seviyede!"
+        return f"{self.name.upper()} beslendi! Şu anki XP: {self.experience}/{self.level * 20}"
